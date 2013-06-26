@@ -43,24 +43,25 @@ start_date = 20130617
 end_date = 20130624
 
 wrong_screenshots = {}
+screenshots_list = []
 
 for tDate in range(start_date, end_date):
     workdiary = client.team.get_workdiaries(config.team_name,
                                             config.user_id,
                                             date=str(tDate))
     for snapshot in workdiary[1]:
-        if int(snapshot[u'activity']) <= 1:
-            pass
+        if int(snapshot[u'activity']) == 1:
             # low activity detection
-            # Disabled until API bug is fixed
-            #wrong_screenshots[snapshot[u'screenshot_img_lrg']] =\
-                #int(snapshot[u'time']) - int(snapshot[u'cell_time'])
+            screenshots_list.append(snapshot[u'screenshot_img_lrg'])
+            wrong_screenshots[snapshot[u'screenshot_img_lrg']] =\
+                int(snapshot[u'time']) - int(snapshot[u'cell_time'])
         else:
             # black screenshots detection
             responce = sessionClient.urlopen(snapshot[u'screenshot_img_lrg'])
             image = io.BytesIO(responce.read())
             blackness_level = blackness(image)
             if blackness_level > 0.9:
+                screenshots_list.append(snapshot[u'screenshot_img_lrg'])
                 wrong_screenshots[snapshot[u'screenshot_img_lrg']] =\
                     int(snapshot[u'time']) - int(snapshot[u'cell_time'])
 
@@ -68,4 +69,5 @@ for tDate in range(start_date, end_date):
 print "Total time taken by wrong screenshots: %f " %\
     (float(sum(wrong_screenshots.values())) / 3600)
 print "Total number of wrong screenshots: %d" % (len(wrong_screenshots.keys()))
+
 sessionClient.logout()
