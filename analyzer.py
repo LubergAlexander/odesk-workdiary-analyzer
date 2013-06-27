@@ -2,6 +2,7 @@ import odesk
 import config
 from PIL import Image
 import io
+import argparse
 
 
 # Detect blackness of the picture to determine
@@ -14,6 +15,18 @@ def blackness(image_file):
     hist = image.histogram()
     dark = sum(hist[i] for i in range(10))
     return dark / float(size)
+
+
+parser = argparse.ArgumentParser(
+    description='This app will fetch all snapshot data in the given date range\
+    and will output how much time is \'unbillable\'')
+parser.add_argument('--start_date',
+                    help='The start date to use for workdiary analysis',
+                    required=True)
+parser.add_argument('--end_date',
+                    help='The end date to use for workdiary analysis',
+                    required=True)
+args = vars(parser.parse_args())
 
 PUBLIC_KEY = config.public_key or raw_input('Enter public key: ')
 SECRET_KEY = config.secret_key or raw_input('Enter secret key: ')
@@ -38,14 +51,12 @@ if auth_token is None:
 
 
 client = odesk.Client(PUBLIC_KEY, SECRET_KEY, auth_token)
-# TODO: Should be parametrized
-start_date = 20130617
-end_date = 20130624
+
 
 wrong_screenshots = {}
 screenshots_list = []
 
-for tDate in range(start_date, end_date):
+for tDate in range(int(args['start_date']), int(args['end_date'])):
     workdiary = client.team.get_workdiaries(config.team_name,
                                             config.user_id,
                                             date=str(tDate))
