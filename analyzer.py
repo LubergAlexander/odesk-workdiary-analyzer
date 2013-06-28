@@ -3,6 +3,7 @@ import config
 from PIL import Image
 import io
 import argparse
+from datetime import timedelta, datetime
 
 
 # Detect blackness of the picture to determine
@@ -17,6 +18,12 @@ def blackness(image_file):
     return dark / float(size)
 
 
+# Generate the date range list
+def daterange(start_date, end_date):
+    for n in range(int((end_date - start_date).days)):
+        yield start_date + timedelta(n)
+
+
 parser = argparse.ArgumentParser(
     description='This app will fetch all snapshot data in the given date range\
     and will output how much time is \'unbillable\'')
@@ -27,7 +34,8 @@ parser.add_argument('--end_date',
                     help='The end date to use for workdiary analysis',
                     required=True)
 args = vars(parser.parse_args())
-
+(start_date, end_date) = (datetime.strptime(args['start_date'], "%m%d%Y"),
+                          datetime.strptime(args['end_date'], "%m%d%Y"))
 PUBLIC_KEY = config.public_key or raw_input('Enter public key: ')
 SECRET_KEY = config.secret_key or raw_input('Enter secret key: ')
 USERNAME = config.username or raw_input('Enter your oDesk login: ')
@@ -56,10 +64,10 @@ client = odesk.Client(PUBLIC_KEY, SECRET_KEY, auth_token)
 wrong_screenshots = {}
 screenshots_list = []
 
-for tDate in range(int(args['start_date']), int(args['end_date'])):
+for tDate in daterange(start_date, end_date):
     workdiary = client.team.get_workdiaries(config.team_name,
                                             config.user_id,
-                                            date=str(tDate))
+                                            date=tDate.strftime("%Y%m%d"))
     for snapshot in workdiary[1]:
         if int(snapshot[u'activity']) == 1:
             # low activity detection
